@@ -4,16 +4,24 @@
 O SuUAV é uma ferramenta desenvolvida para facilitar a integração de veículos aéreos não tripulados (UAVs) em cenários de simulação de tráfego urbano gerados pelo SUMO. A ferramenta permite a inserção de UAVs com diferentes padrões de mobilidade, a geração de vídeos da simulação e a exportação de arquivos de mobilidade para uso em simuladores de redes, como o ns-3. Este repositório contém o código-fonte da ferramenta, exemplos de uso e documentação detalhada.
 
 ---
-
 # Estrutura do Repositório
+```
 /repositorio
 │
-├── /src # Código-fonte da ferramenta SuUAV
-├── /examples # Exemplos de arquivos de configuração e traces
-├── /docs # Documentação adicional
-├── README.md # Este arquivo
-├── LICENSE # Licença do projeto (MIT)
-└── requirements.txt # Dependências do projeto
+├── /src                # Código-fonte da ferramenta SuUAV
+├── /interface          # Código-fonte da interface para mapa interativo
+├── /paserser           # Código-fonte do parser para leitura de configuração
+├── all_configs.ini     # Exemplo de configuração com todos os parâmetros
+├── example.ini         # Configuração para exemplo
+├── example.ini         # Cenário de tráfego para uso de exemplo
+├── minimo.ini          # Configuração para execução minima
+├── README.md           # Este arquivo
+├── LICENSE             # Licença do projeto (MIT)
+└── requirements.txt    # Dependências do projeto
+├── SuUAV.py            # Arquivo principal
+```
+
+Há também a documentação do projeto hospedada em https://mateussantos14.github.io/SuUAVDocs/example/
 
 ---
 
@@ -49,7 +57,9 @@ O processo de instalação é simplificado utilizando Sistemas de base Linux poi
 As principais dependências do projeto são:
 - Python 3.11.4
 - ffmpeg
-- geopandas 1.0.1
+
+As bibliotecas python utilizadas foram:
+- geopandas 1.0.1 
 - matplotlib 3.8.0
 - Shapely
 - descartes 1.1.0
@@ -71,7 +81,6 @@ pip install -r requirements.txt
 
 Instalar o python, o pip e o ffmpeg através dos executáveis presentes nos sites das respectivas organizações. Com os mesmos instalados, execute:
 ```bash
-sudo apt install python ffmpeg pip
 git clone https://github.com/MateusSantos14/SuUAV.git
 python -m venv .venv
 source .venv/bin/activate
