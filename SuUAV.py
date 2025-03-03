@@ -7,9 +7,6 @@ from funcs.parser import parse_config_and_run
 from interface.InteractivePlot import run
 
 if __name__ == "__main__":
-    '''
-    Teste
-    '''
     parser = argparse.ArgumentParser(description="SuUAV Application")
     parser.add_argument('--run', action='store_true', help="Start the application with the run configuration")
     parser.add_argument('--setup', action='store_true', help="Start the setup with the setup configuration")

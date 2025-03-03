@@ -183,7 +183,7 @@ class InteractivePlot:
         # Salva o arquivo de configuração
         with open(f"{self.base_file_path}.ini", "w") as configfile:
             config.write(configfile)
-        print("Config file 'config.ini' generated.")
+        print(f"Config file '{self.base_file_path}.ini' generated.")
 
     def show(self):
         """
