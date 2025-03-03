@@ -70,9 +70,9 @@ As bibliotecas python utilizadas foram:
 
 Para instalar a ferramenta, execute:
 ```bash
-sudo apt install python ffmpeg pip
+sudo apt install python3 ffmpeg pip
 git clone https://github.com/MateusSantos14/SuUAV.git
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -82,7 +82,7 @@ pip install -r requirements.txt
 Instalar o python, o pip e o ffmpeg através dos executáveis presentes nos sites das respectivas organizações. Com os mesmos instalados, execute:
 ```bash
 git clone https://github.com/MateusSantos14/SuUAV.git
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -92,7 +92,7 @@ pip install -r requirements.txt
 Rode o comando
 
 ```
-python main.py --run -i minimo.ini
+python3 SuUAV.py --run -i minimo.ini
 ```
 
 Após isso, será gerado o vídeo minimo_video.mp4 e o trace minimoUAV.xml
@@ -108,7 +108,7 @@ Os valores de tempo podem variar de acordo com o dispositivo utilizado. Esses va
 ## Construção das configurações através de interface
 Para testar a aplicação funcionando, o comando abaixo executará o mapa interativo para selecionar os pontos iniciais dos UAVs:
 ```
-python main.py --setup -i example.xml
+python3 SuUAV.py --setup -i example.xml
 ```
 ## Alterar parâmetros de mobilidade
 Após isso, será gerado o arquivo de configuração example.ini, é possível alterar certos parâmetros da mobilidade dos UAVs. Se desejar, pode alterar para ver como se comporta.
@@ -116,7 +116,7 @@ Após isso, será gerado o arquivo de configuração example.ini, é possível a
 ## Exportação para trace e geração de vídeo
 Em seguida, rode o comando e aguarde o vídeo ser gerado:
 ```
-python main.py --run -i example.ini
+python3 SuUAV.py --run -i example.ini
 ```
 
 Após isso, será gerado o vídeo example_video.mp4 e o trace exampleUAV.xml.
