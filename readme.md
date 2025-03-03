@@ -63,6 +63,7 @@ As bibliotecas python utilizadas foram:
 - matplotlib 3.8.0
 - Shapely
 - descartes 1.1.0
+- PyQt5
 
 # Instalação
 
