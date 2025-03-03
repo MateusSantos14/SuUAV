@@ -70,8 +70,9 @@ As bibliotecas python utilizadas foram:
 
 Para instalar a ferramenta, execute:
 ```bash
-sudo apt install python3 ffmpeg pip
+sudo apt install python3 ffmpeg pip python3-venv
 git clone https://github.com/MateusSantos14/SuUAV.git
+cd SuUAV
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
