@@ -1,7 +1,7 @@
 # SuUAV: Uma ferramenta para construção de cenários de mobilidade com UAVs
 
 # Resumo
-O SuUAV é uma ferramenta desenvolvida para facilitar a integração de veículos aéreos não tripulados (UAVs) em cenários de simulação de tráfego urbano gerados pelo SUMO. A ferramenta permite a inserção de UAVs com diferentes padrões de mobilidade, a geração de vídeos da simulação e a exportação de arquivos de mobilidade para uso em simuladores de redes, como o ns-3. Este repositório contém o código-fonte da ferramenta, exemplos de uso e documentação detalhada.
+O uso de Veículos Aéreos Não Tripulados (UAVs) tem se tornado cada vez mais relevante em simulações de redes veiculares, permitindo a avaliação da mobilidade e comunicação nesses cenários. Este artigo apresenta o SuUAV, uma ferramenta que facilita a integração da mobilidade de UAVs em simulações de tráfego geradas pelo SUMO, oferecendo uma solução flexível para geração e visualização de cenários. A utilização do SuUAV simplifica o processo de modelagem, reduzindo o tempo de configuração e proporcionando uma melhor análise do impacto dos UAVs em redes veiculares.
 
 ---
 # Estrutura do Repositório
