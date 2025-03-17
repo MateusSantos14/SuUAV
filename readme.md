@@ -114,7 +114,7 @@ Para testar a aplicação funcionando, o comando abaixo executará o mapa intera
 python3 SuUAV.py --setup -i example.xml
 ```
 ## Alterar parâmetros de mobilidade
-Após isso, será gerado o arquivo de configuração example.ini, é possível alterar certos parâmetros da mobilidade dos UAVs. Se desejar, pode alterar para ver como se comporta.
+Após isso, será gerado o arquivo de configuração example.ini, é possível alterar certos parâmetros da mobilidade dos UAVs. Uma explicação mais detalhada de cada parâmetro pode ser vista na documentação: [parâmetros](https://mateussantos14.github.io/SuUAVDocs/example/)
 
 ## Exportação para trace e geração de vídeo
 Em seguida, rode o comando e aguarde o vídeo ser gerado:
