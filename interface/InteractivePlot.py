@@ -6,6 +6,7 @@ import geopandas as gpd
 import configparser
 from matplotlib.widgets import Button, RadioButtons
 import os
+import time
 
 # Labels para interface em português
 label_dict = {
@@ -14,6 +15,15 @@ label_dict = {
     'Trator': 'tractor',
     'Estático': 'static',
     'Quadrangular': 'square'
+}
+
+# Cores para cada tipo de padrão selecionado
+pattern_colors = {
+    "circular": "#3498db",  # Azul
+    "angular": "#e67e22",   # Laranja
+    "tractor": "#9b59b6",   # Roxo
+    "static": "#2ecc71",    # Verde
+    "square": "#e74c3c"     # Vermelho
 }
 
 class InteractivePlot:
@@ -36,13 +46,16 @@ class InteractivePlot:
         # Remove a extensão .xml do caminho do arquivo
         self.base_file_path = os.path.splitext(xml_file)[0]
         self.x_coords, self.y_coords = self.extract_coordinates(xml_file)
+        if not self.x_coords or not self.y_coords:
+            raise ValueError(f"O arquivo XML '{xml_file}' não contém coordenadas ou elementos de veículos válidos.")
         self.min_x, self.max_x = min(self.x_coords), max(self.x_coords)
         self.min_y, self.max_y = min(self.y_coords), max(self.y_coords)
         self.saved_points = []  # Lista de tuplas: (x, y, pattern, vehicle_id)
-        self.markers = []
+        self.markers = []  # Lista de tuplas: (marker_collection, text_label)
         self.selected_pattern = "circular"  # Padrão inicial
         self.pattern_counts = {"circular": 0, "angular": 0, "tractor": 0, "static": 0, "square": 0}
         self.confirmed = False  # Flag para verificar se o botão "Confirmar" foi clicado
+        self.last_draw_time = 0.0  # Para limitar a taxa de atualização no movimento do mouse
 
     def extract_coordinates(self, xml_file):
         """
@@ -73,9 +86,15 @@ class InteractivePlot:
         Args:
             event: Evento de movimento do mouse.
         """
-        if event.inaxes:
+        if event.inaxes == self.ax:
             self.text.set_text(f"x: {event.xdata:.6f}, y: {event.ydata:.6f}")
-            self.fig.canvas.draw()
+            
+            # Limita a taxa de atualização do desenho do canvas (max 10 FPS)
+            # para evitar sobrecarregar o loop de eventos de renderização
+            current_time = time.time()
+            if current_time - self.last_draw_time > 0.1:
+                self.fig.canvas.draw_idle()
+                self.last_draw_time = current_time
 
     def on_click(self, event):
         """
@@ -84,18 +103,32 @@ class InteractivePlot:
         Args:
             event: Evento de clique do mouse.
         """
-        # Ignora cliques fora da área do mapa ou dentro de elementos da interface
-        if event.inaxes and event.inaxes not in [self.radio.ax, self.button]:
+        # Só processa cliques dentro da área principal do mapa (self.ax)
+        if event.inaxes == self.ax:
             x, y = event.xdata, event.ydata
             # Verifica se as coordenadas estão dentro dos limites do mapa
             if self.min_x <= x <= self.max_x and self.min_y <= y <= self.max_y:
                 self.saved_points.append((x, y, self.selected_pattern, None))
-                marker = self.ax.scatter(x, y, color="red", s=100)
-                self.markers.append(marker)
-                print(f"Saved coordinates: {x:.6f},{y:.6f} with pattern: {self.selected_pattern}")
+                
+                # Cor correspondente ao padrão selecionado
+                color = pattern_colors.get(self.selected_pattern, "red")
+                
+                # Adiciona o marcador do ponto no mapa
+                marker = self.ax.scatter(x, y, color=color, s=120, edgecolor="black", zorder=5)
+                
+                # Adiciona o rótulo de texto ordenado
+                text_label = self.ax.text(
+                    x, y, f" {len(self.saved_points)}", 
+                    fontsize=9, fontweight="bold", color="black",
+                    bbox=dict(facecolor="white", alpha=0.8, edgecolor="none", boxstyle="round,pad=0.2"),
+                    zorder=6
+                )
+                
+                self.markers.append((marker, text_label))
+                print(f"Coordenada salva: {x:.6f},{y:.6f} com padrão: {self.selected_pattern}")
                 self.fig.canvas.draw()
             else:
-                print(f"Ignored click outside map area: {x:.6f},{y:.6f}")
+                print(f"Clique ignorado fora da área do mapa: {x:.6f},{y:.6f}")
 
     def on_confirm(self, event):
         """
@@ -103,6 +136,20 @@ class InteractivePlot:
         """
         self.confirmed = True  # Define a flag como True
         plt.close()
+
+    def on_undo(self, event):
+        """
+        Remove o último ponto adicionado ao mapa e sua correspondente marcação visual.
+        """
+        if self.saved_points:
+            removed_point = self.saved_points.pop()
+            marker, text_label = self.markers.pop()
+            marker.remove()
+            text_label.remove()
+            print(f"Ponto desfeito: {removed_point[0]:.6f},{removed_point[1]:.6f} ({removed_point[2]})")
+            self.fig.canvas.draw()
+        else:
+            print("Nenhum ponto para desfazer.")
 
     def on_pattern_select(self, label):
         """
@@ -112,7 +159,7 @@ class InteractivePlot:
             label (str): Label do padrão selecionado.
         """
         self.selected_pattern = label_dict[label]
-        print(f"Selected pattern: {self.selected_pattern}")
+        print(f"Padrão selecionado: {self.selected_pattern}")
 
     def generate_config(self):
         """
@@ -201,31 +248,77 @@ class InteractivePlot:
         # Cria um GeoDataFrame com o polígono
         data = {"geometry": [polygon]}
         scenario = gpd.GeoDataFrame(data, crs="EPSG:4326")
-        proportion = (self.max_x - self.min_x) / (self.max_y - self.min_y)
-        self.fig, self.ax = plt.subplots(figsize=(10 * proportion, 10), dpi=100)
+        
+        # Cria figura com proporções fixas adequadas e limpas para todos os monitores
+        self.fig = plt.figure(figsize=(12, 8), dpi=100)
+        
+        # Define título amigável na barra da janela (se suportado pelo backend)
+        if hasattr(self.fig.canvas, 'manager') and self.fig.canvas.manager:
+            self.fig.canvas.manager.set_window_title("SuUAV - Configuração de Drones")
+            
+        # Adiciona eixos do mapa ocupando 70% de largura à esquerda (de 0.05 a 0.75)
+        self.ax = self.fig.add_axes([0.05, 0.08, 0.70, 0.84])
+        
+        # Plota os limites do cenário sem preenchimento
         scenario.plot(ax=self.ax, alpha=0)
-        cx.add_basemap(
-            self.ax, crs=scenario.crs, source=cx.providers.OpenStreetMap.Mapnik
-        )
+        
+        # Adiciona margem de 10% nas extremidades dos limites do mapa para evitar clipping
+        dx = self.max_x - self.min_x
+        dy = self.max_y - self.min_y
+        if dx == 0: dx = 0.001
+        if dy == 0: dy = 0.001
+        self.ax.set_xlim(self.min_x - dx * 0.1, self.max_x + dx * 0.1)
+        self.ax.set_ylim(self.min_y - dy * 0.1, self.max_y + dy * 0.1)
+        
+        # Adiciona o basemap com tratamento de erro para uso offline resiliente
+        try:
+            cx.add_basemap(
+                self.ax, crs=scenario.crs, source=cx.providers.OpenStreetMap.Mapnik
+            )
+        except Exception as e:
+            print(f"Aviso: Não foi possível carregar o mapa de fundo (basemap): {e}")
+            print("A interface continuará sem o mapa de fundo.")
 
-        # Conecta eventos
+        # Conecta eventos do mouse
         self.cid_move = self.fig.canvas.mpl_connect(
             "motion_notify_event", self.on_mouse_move
         )
         self.cid_click = self.fig.canvas.mpl_connect(
             "button_press_event", self.on_click
         )
-        self.text = self.ax.text(0.05, 0.95, "", transform=self.ax.transAxes)
+        
+        # Caixa de texto com coordenadas sob o cursor
+        self.text = self.ax.text(
+            0.02, 0.98, "", 
+            transform=self.ax.transAxes,
+            verticalalignment='top',
+            bbox=dict(facecolor='white', alpha=0.75, edgecolor='none', boxstyle='round,pad=0.3'),
+            zorder=10
+        )
 
-        # Adiciona botões de seleção de padrão
-        ax_radio = plt.axes([0.8, 0.1, 0.15, 0.2])
+        # Adiciona botões de seleção de padrão (RadioButtons) na barra lateral (de 0.78 a 0.96)
+        ax_radio = self.fig.add_axes([0.78, 0.45, 0.18, 0.35])
         self.radio = RadioButtons(ax_radio, list(label_dict.keys()))
         self.radio.on_clicked(self.on_pattern_select)
+        ax_radio.set_facecolor("#f9f9f9")
 
-        # Adiciona botão de confirmação
-        ax_button = plt.axes([0.8, 0.01, 0.1, 0.075])
-        self.button = Button(ax_button, "Confirm")
-        self.button.on_clicked(self.on_confirm)
+        # Adiciona botão de desfazer (Desfazer)
+        ax_undo = self.fig.add_axes([0.78, 0.28, 0.18, 0.08])
+        self.button_undo = Button(
+            ax_undo, "Desfazer", 
+            color="#fadbd8", 
+            hovercolor="#ec7063"
+        )
+        self.button_undo.on_clicked(self.on_undo)
+
+        # Adiciona botão de confirmação (Confirmar)
+        ax_confirm = self.fig.add_axes([0.78, 0.15, 0.18, 0.08])
+        self.button_confirm = Button(
+            ax_confirm, "Confirmar", 
+            color="#d4efdf", 
+            hovercolor="#2ecc71"
+        )
+        self.button_confirm.on_clicked(self.on_confirm)
 
         plt.show()
 
