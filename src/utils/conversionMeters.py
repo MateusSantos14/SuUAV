@@ -1,7 +1,11 @@
 import xml.etree.ElementTree as ET
+import math
 from math import cos, radians
 from pyproj import Proj, transform
 from typing import Tuple
+
+# Raio da Terra em metros
+earth_radius: float = 6371000
 
 def longitude_to_utm_zone(longitude: float) -> int:
     """
@@ -90,3 +94,57 @@ def convert_coordinates(input_xml_path: str, output_xml_path: str) -> None:
     tree.write(output_xml_path, xml_declaration=True, encoding='utf-8', default_namespace=None)
 
     print(f"Conversão concluída e salva em '{output_xml_path}'")
+
+def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Calcula a distância do círculo máximo entre dois pontos na superfície da Terra
+    com base em suas latitudes e longitudes.
+    """
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlon / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return earth_radius * c
+
+def calculate_angle(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+    """
+    Calcula o ângulo de direção entre dois pontos na superfície da Terra.
+    """
+    lat1, lon1 = math.radians(p1[0]), math.radians(p1[1])
+    lat2, lon2 = math.radians(p2[0]), math.radians(p2[1])
+    dlon = lon2 - lon1
+
+    x = math.sin(dlon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+    angle = math.atan2(x, y)
+    return angle
+
+def limit_speed(start_point: Tuple[float, float], end_point: Tuple[float, float], max_distance: float) -> Tuple[float, float]:
+    """
+    Limita a distância entre dois pontos a um valor máximo, preservando a direção.
+    """
+    distance = haversine_distance(start_point[0], start_point[1], end_point[0], end_point[1])
+    if distance > max_distance:
+        ratio = max_distance / distance
+        lat = start_point[0] + (end_point[0] - start_point[0]) * ratio
+        lon = start_point[1] + (end_point[1] - start_point[1]) * ratio
+        return (lat, lon)
+    else:
+        return end_point
+
+def meters_to_geo(a: float) -> float:
+    """
+    Converte metros para graus geográficos.
+    """
+    return a / earth_radius * (180 / math.pi)
+
+def geo_to_meters(a: float) -> float:
+    """
+    Converte graus geográficos para metros.
+    """
+    return a * earth_radius * (math.pi / 180)
